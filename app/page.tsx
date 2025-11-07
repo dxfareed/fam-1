@@ -9,13 +9,18 @@ export default function Home() {
   const { isConnected, address } = useAccount()
   const { connect, connectors } = useConnect()
 
+  const shortenAddress = (addr: string) => {
+    if (!addr) return '';
+    return `${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}`;
+  };
+
   return (
     <div className={styles.container}>
       <header className={styles.headerWrapper}>
         {isConnected ? (
-          <div>{address}</div>
+          <div className={styles.win98Address}>{shortenAddress(address as string)}</div>
         ) : (
-          <button onClick={() => connect({ connector: connectors[0] })}>Connect</button>
+          <button className={styles.win98Button} onClick={() => connect({ connector: connectors[0] })}>Connect</button>
         )}
       </header>
 

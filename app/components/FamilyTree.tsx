@@ -5,12 +5,17 @@ import { useUser } from '@/app/context/UserContext';
 import { getFamily } from '@/lib/family';
 import { fetchUsers } from '@/lib/user';
 import { User } from '@/lib/neynar';
+import Modal from './Modal';
+import Toast from './Toast';
+import Loader from './Loader';
 import styles from './FamilyTree.module.css';
 
 export function FamilyTree() {
-  const { fid } = useUser();
+  const { fid, username } = useUser();
   const [familyProfiles, setFamilyProfiles] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(true);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
     if (fid) {
@@ -20,37 +25,57 @@ export function FamilyTree() {
             const familyFids = bestFriends.map((friend) => friend.fid);
             const users = await fetchUsers(familyFids, fid);
             setFamilyProfiles(users);
+            setToast({ message: 'Family data loaded successfully!', type: 'success' });
           }
         })
-        .catch(console.error)
+        .catch(error => {
+          console.error(error);
+          setToast({ message: 'Failed to load family data.', type: 'error' });
+        })
         .finally(() => setLoading(false));
     }
   }, [fid]);
 
+  const closeModal = () => setIsModalOpen(false);
+  const closeToast = () => setToast(null);
+
+  const modalTitle = username ? `${username}'s Family` : 'Farcaster Family';
+
   return (
-    <div className={styles.window}>
-      <div className={styles.titleBar}>
-        <div className={styles.title}>Farcaster Family</div>
-        <div className={styles.buttons}>
-          <div className={styles.button}>_</div>
-          <div className={styles.button}>[]</div>
-          <div className={styles.button}>X</div>
-        </div>
-      </div>
-      <div className={styles.content}>
-        {loading ? (
-          <p>Loading...</p>
-        ) : (
-          <ul>
-            {familyProfiles.map((member) => (
-              <li key={member.fid} className={styles.member}>
-                <img src={member.pfp_url} alt={member.username} width={32} height={32} />
-                <span>{member.display_name} (@{member.username})</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </div>
+    <>
+      {isModalOpen && (
+        <Modal title={modalTitle} onClose={closeModal}>
+          {loading ? (
+            <Loader />
+          ) : (
+            <div className={styles.familyGrid}>
+              <div className={styles.row}>
+                {familyProfiles.slice(0, 2).map((member, index) => (
+                  <div key={member.fid} className={styles.member}>
+                    <img src={member.pfp_url} alt={member.username} width={32} height={32} />
+                    <span>{member.display_name} (@{member.username})</span>
+                  </div>
+                ))}
+              </div>
+              <div className={styles.row}>
+                {familyProfiles.slice(2, 5).map((member, index) => (
+                  <div key={member.fid} className={styles.member}>
+                    <img src={member.pfp_url} alt={member.username} width={32} height={32} />
+                    <span>{member.display_name} (@{member.username})</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </Modal>
+      )}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={closeToast}
+        />
+      )}
+    </>
   );
 }

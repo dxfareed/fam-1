@@ -1,0 +1,51 @@
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #c0c0c0;
+  border-top: 2px solid #ffffff;
+  border-left: 2px solid #ffffff;
+  border-right: 2px solid #000000;
+  border-bottom: 2px solid #000000;
+  box-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  font-family: 'W95FA', sans-serif;
+}
+
+.icon {
+  width: 32px;
+  height: 32px;
+  margin-right: 10px;
+}
+
+.message {
+  margin: 0;
+  color: #000;
+}
+
+.closeButton {
+  background: #c0c0c0;
+  border-top: 1px solid #ffffff;
+  border-left: 1px solid #ffffff;
+  border-right: 1px solid #000000;
+  border-bottom: 1px solid #000000;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  margin-left: 16px;
+  color: #000;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.closeButton:active {
+  border-top: 1px solid #000000;
+  border-left: 1px solid #000000;
+  border-right: 1px solid #ffffff;
+  border-bottom: 1px solid #ffffff;
+}
