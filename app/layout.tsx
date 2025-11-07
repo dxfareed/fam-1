@@ -1,17 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { minikitConfig } from "@/minikit.config";
 import { RootProvider } from "./rootProvider";
-import { Space_Mono } from 'next/font/google';
 import "./globals.css";
+import fontStyles from './fonts.module.css';
 //import { ErudaLoader } from "./components/ErudaLoader";
 import { Analytics } from "@vercel/analytics/next"; // Import Analytics
-
-const spaceMono = Space_Mono({
-  subsets: ['latin'],
-  weight: ['400', '700'],
-  style: ['normal', 'italic'],
-  variable: '--font-space-mono',
-});
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -49,8 +42,8 @@ export default function RootLayout({
 }) {
 
   return (
-    <html lang="en" className={spaceMono.variable}>
-      <body>
+    <html lang="en">
+      <body className={fontStyles.w95fa}>
         <RootProvider>{children}</RootProvider>
         <Analytics />
       </body>
