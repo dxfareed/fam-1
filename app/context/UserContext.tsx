@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { sdk } from '@farcaster/miniapp-sdk';
+import { sdk} from '@farcaster/miniapp-sdk';
 
 type UserContextType = {
   fid: number | null;
@@ -26,7 +26,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     getFarcasterUser();
   }, []);
 
-  const value = { fid };
+  const value = { fid, sdk };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 }
