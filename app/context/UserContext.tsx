@@ -20,7 +20,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         const { user } = await sdk.context;
         if (user) {
           setFid(user.fid);
-          setUsername(user.username);
+          setUsername(user.username ?? null);
         }
       } catch (error) {
         console.error("Failed to get Farcaster user:", error);

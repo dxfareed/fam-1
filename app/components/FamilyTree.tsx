@@ -11,16 +11,46 @@ import { withRetry } from '@/lib/retry';
 
 const ModernLoader = () => <div className={styles.loader}></div>;
 
-export function FamilyTree() {
+interface FamilyTreeProps {
+  isConnected: boolean;
+}
+
+export function FamilyTree({ isConnected }: FamilyTreeProps) {
   const { fid, username } = useUser();
   const [nftHolders, setNftHolders] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isCheckingAccess, setIsCheckingAccess] = useState(true);
+  const [hasAccess, setHasAccess] = useState(false);
   const [nftOwnership, setNftOwnership] = useState<Record<number, { holdingNft: boolean; nftImage: string | null }>>({});
 
   useEffect(() => {
-    if (fid) {
-      withRetry(() => getFamily(fid))
-        .then(async (bestFriends) => {
+    if (fid && isConnected) {
+      const checkAccessAndLoadFamily = async () => {
+        setIsCheckingAccess(true);
+        setLoading(true);
+        // 1. Check for NFT ownership first
+        const [mainUser] = await fetchUsers([fid], fid);
+        if (!mainUser) {
+          setIsCheckingAccess(false);
+          setLoading(false);
+          return;
+        }
+
+        const ownership = await checkNftOwnership(mainUser);
+        if (ownership.holdingNft) {
+          setHasAccess(true);
+        } else {
+          setHasAccess(false);
+          setIsCheckingAccess(false);
+          setLoading(false);
+          return;
+        }
+
+        setIsCheckingAccess(false);
+
+        // 2. If access is granted, proceed to get the family
+        try {
+          const bestFriends = await withRetry(() => getFamily(fid));
           if (bestFriends.length > 0) {
             const familyFids = bestFriends.map((friend) => friend.fid);
             const users = await fetchUsers(familyFids, fid);
@@ -51,13 +81,53 @@ export function FamilyTree() {
 
             setNftHolders(sortedHolders.slice(0, 6));
           }
-        })
-        .catch(console.error)
-        .finally(() => setLoading(false));
-    }
-  }, [fid]);
+        } catch (error) {
+          console.error(error);
+        } finally {
+          setLoading(false);
+        }
+      };
 
-  const cardTitle = username ? `${username}'s Family` : 'Farcaster Family';
+      checkAccessAndLoadFamily();
+    } else {
+      // If not connected or no fid, ensure loading states are reset
+      setIsCheckingAccess(false);
+      setLoading(false);
+    }
+  }, [fid, isConnected]);
+
+  const cardTitle = username ? `My Warplet Family` : 'Farcaster Family';
+
+  if (!isConnected) {
+    return (
+      <div className={styles.card}>
+        <h2 className={styles.title}>Connect Your Wallet</h2>
+        <p className={styles.accessDeniedText}>
+          Please connect your wallet to view your family tree.
+        </p>
+      </div>
+    );
+  }
+
+  if (isCheckingAccess) {
+    return (
+      <div className={styles.card}>
+        <h2 className={styles.title}>Checking for Warplet NFT...</h2>
+        <ModernLoader />
+      </div>
+    );
+  }
+
+  if (!hasAccess) {
+    return (
+      <div className={styles.card}>
+        <h2 className={styles.title}>Access Denied</h2>
+        <p className={styles.accessDeniedText}>
+          You must own a Warplet NFT to view your family tree.
+        </p>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -85,7 +155,7 @@ export function FamilyTree() {
                   />
                 )}
               </div>
-              <span>{member.display_name}</span>
+              <span>{member.username}</span>
             </div>
           ))}
         </div>
@@ -102,7 +172,7 @@ export function FamilyTree() {
                   />
                 )}
               </div>
-              <span>{member.display_name}</span>
+              <span>{member.username}</span>
             </div>
           ))}
         </div>
@@ -119,7 +189,7 @@ export function FamilyTree() {
                   />
                 )}
               </div>
-              <span>{member.display_name}</span>
+              <span>{member.username}</span>
             </div>
           ))}
         </div>

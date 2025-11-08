@@ -39,6 +39,9 @@ model User {
   events               UserEvent[]
   taskCompletions      UserTaskCompletion[]
   leaderboardHistory   WeeklyLeaderboardHistory[]
+  initiatedMatches   Match[]                    @relation("InitiatedMatches")
+  opponentMatches    Match[]                    @relation("OpponentMatches")
+  wonMatches         Match[]                    @relation("WonMatches")
 }
 
 model Claim {
@@ -115,6 +118,58 @@ model WeeklyLeaderboardHistory {
   @@index([userId])
 }
 
+model Match {
+  id              String   @id @default(cuid())
+  stakedAmount    Decimal
+  amountEarned    Decimal?
+
+  initiatorId     String
+  initiator       User     @relation("InitiatedMatches", fields: [initiatorId], references: [id])
+  opponentId      String
+  opponent        User     @relation("OpponentMatches", fields: [opponentId], references: [id])
+  initiatorWalletAddress String?
+  opponentWalletAddress  String?
+
+  status          MatchStatus @default(PENDING)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  expiresAt       DateTime // For the 6-hour invitation expiry
+  matchExpiresAt  DateTime? // For the 6-hour overall match expiry
+  initiatorSessionStartsAt DateTime?
+  opponentSessionStartsAt  DateTime?
+
+  initiatorScore  Int?
+  opponentScore   Int?
+  initiatorTotalScore BigInt?
+  opponentTotalScore  BigInt?
+  winnerId        String?
+  winner          User?    @relation("WonMatches", fields: [winnerId], references: [id])
+
+  @@index([initiatorId])
+  @@index([opponentId])
+  @@index([status])
+}
+
+model UserCache {
+  fid         BigInt   @id
+  userProfile Json
+  updatedAt   DateTime @updatedAt
+}
+
+model FamilyCache {
+  fid       BigInt   @id
+  pfpUrl    String?
+  family    Json
+  updatedAt DateTime @updatedAt
+}
+
+model NftCache {
+  fid        BigInt    @id
+  holdingNft Boolean
+  nftImage   String?
+  updatedAt  DateTime  @updatedAt
+}
+
 enum RegistrationStatus {
   PENDING
   ACTIVE
@@ -124,4 +179,13 @@ enum TaskType {
   DEFAULT
   DAILY
   PARTNER
+}
+
+enum MatchStatus {
+  PENDING
+  INVITED
+  ACTIVE
+  REJECTED
+  CANCELLED
+  COMPLETED
 }

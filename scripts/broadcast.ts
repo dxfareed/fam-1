@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import prisma from '../lib/prisma';
-import { sendRewards } from '../lib/own';
+// import { sendRewards } from '../lib/own';
 
 interface NotificationDetails {
   [key: string]: any;
@@ -163,17 +163,17 @@ async function main() {
 
         console.log(`Attempting to send ${totalRewardAmount} $ENB to ${recipientAddresses.length} users.`);
 
-        try {
-          const txHash = await sendRewards(recipientAddresses, totalRewardAmount);
-          console.log(`Rewards transaction successful! Hash: ${txHash}`);
+        // try {
+        //   const txHash = await sendRewards(recipientAddresses, totalRewardAmount);
+        //   console.log(`Rewards transaction successful! Hash: ${txHash}`);
 
-          // On successful transaction, send notifications
-          const usersWithTokens = usersToReward.filter(u => u.notificationToken);
-          await sendNotifications(usersWithTokens, notificationConfig, API_URL, API_SECRET_KEY);
+        //   // On successful transaction, send notifications
+        //   const usersWithTokens = usersToReward.filter(u => u.notificationToken);
+        //   await sendNotifications(usersWithTokens, notificationConfig, API_URL, API_SECRET_KEY);
 
-        } catch (error) {
-          console.error("Reward distribution failed, notifications will not be sent.", error);
-        }
+        // } catch (error) {
+        //   console.error("Reward distribution failed, notifications will not be sent.", error);
+        // }
       } else {
         console.log("Could not find user details for top FIDs. No rewards sent.");
       }

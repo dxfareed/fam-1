@@ -1,14 +1,15 @@
 "use client";
 import Image from "next/image";
 import styles from "./page.module.css";
-import { useAccount, useConnect } from 'wagmi'
+import { useAccount } from 'wagmi'
+import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { FamilyTree } from "./components/FamilyTree";
 import FloatingPet from "./components/FloatingPet";
 //import { useEffect } from "react";
 
 export default function Home() {
-  const { isConnected, address } = useAccount()
-  const { connect, connectors } = useConnect()
+  const { isConnected, address, isConnecting } = useAccount()
+  const { openConnectModal } = useConnectModal();
 
   const shortenAddress = (addr: string) => {
     if (!addr) return '';
@@ -21,14 +22,20 @@ export default function Home() {
         {isConnected ? (
           <div className={styles.modernAddress}>{shortenAddress(address as string)}</div>
         ) : (
-          <button className={styles.modernButton} onClick={() => connect({ connector: connectors[0] })}>Connect</button>
+          <button 
+            className={styles.modernButton} 
+            onClick={openConnectModal} 
+            disabled={isConnecting}
+          >
+            {isConnecting ? 'Connecting...' : 'Connect'}
+          </button>
         )}
       </header>
 
       {/* <FloatingPet /> */}
 
       <div className={styles.content}>
-        <FamilyTree />
+        <FamilyTree isConnected={isConnected} />
       </div>
     </div>
   );

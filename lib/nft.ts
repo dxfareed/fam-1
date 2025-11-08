@@ -4,8 +4,8 @@ import { User } from '@/lib/neynar';
 import { ethers } from 'ethers';
 
 const NFT_CONTRACT_ADDRESS = '0x699727f9e01a822efdcf7333073f0461e5914b4e';
-const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY; // Add your Alchemy API key to .env.local
-const BASE_RPC_URL = 'https://base.drpc.org';
+const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
+const BASE_RPC_URL = process.env.NEXT_PUBLIC_HTTPS_IN_URL;
 
 const erc721Abi = [
   "function balanceOf(address owner) view returns (uint256)",

@@ -6,7 +6,8 @@ import { config } from "@/lib/wagmi";
 import { UserProvider } from '@/app/context/UserContext';
 import { MiniAppProvider } from "@neynar/react";
 import { sdk } from "@farcaster/miniapp-sdk";
-
+import '@rainbow-me/rainbowkit/styles.css';
+import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit';
 
 const queryClient = new QueryClient();
 
@@ -23,9 +24,11 @@ export function RootProvider({ children }: { children: ReactNode }) {
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <MiniAppProvider>
-          <UserProvider>
-            {mounted && children}
-          </UserProvider>
+          <RainbowKitProvider theme={darkTheme()}>
+            <UserProvider>
+              {mounted && children}
+            </UserProvider>
+          </RainbowKitProvider>
         </MiniAppProvider>
       </QueryClientProvider>
     </WagmiProvider>
