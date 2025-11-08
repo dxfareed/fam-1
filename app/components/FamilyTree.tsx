@@ -5,17 +5,15 @@ import { useUser } from '@/app/context/UserContext';
 import { getFamily } from '@/lib/family';
 import { fetchUsers } from '@/lib/user';
 import { User } from '@/lib/neynar';
-import Modal from './Modal';
-import Toast from './Toast';
-import Loader from './Loader';
 import styles from './FamilyTree.module.css';
+import { checkNftOwnership } from '@/lib/nft';
+
+const ModernLoader = () => <div className={styles.loader}></div>;
 
 export function FamilyTree() {
   const { fid, username } = useUser();
   const [familyProfiles, setFamilyProfiles] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(true);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
     if (fid) {
@@ -25,57 +23,56 @@ export function FamilyTree() {
             const familyFids = bestFriends.map((friend) => friend.fid);
             const users = await fetchUsers(familyFids, fid);
             setFamilyProfiles(users);
-            setToast({ message: 'Family data loaded successfully!', type: 'success' });
+
+            // Check for NFT ownership
+            users.forEach(checkNftOwnership);
           }
         })
-        .catch(error => {
-          console.error(error);
-          setToast({ message: 'Failed to load family data.', type: 'error' });
-        })
+        .catch(console.error)
         .finally(() => setLoading(false));
     }
   }, [fid]);
 
-  const closeModal = () => setIsModalOpen(false);
-  const closeToast = () => setToast(null);
+  const cardTitle = username ? `${username}'s Family` : 'Farcaster Family';
 
-  const modalTitle = username ? `${username}'s Family` : 'Farcaster Family';
+  if (loading) {
+    return (
+      <div className={styles.card}>
+        <h2 className={styles.title}>{cardTitle}</h2>
+        <ModernLoader />
+      </div>
+    );
+  }
 
   return (
-    <>
-      {isModalOpen && (
-        <Modal title={modalTitle} onClose={closeModal}>
-          {loading ? (
-            <Loader />
-          ) : (
-            <div className={styles.familyGrid}>
-              <div className={styles.row}>
-                {familyProfiles.slice(0, 2).map((member, index) => (
-                  <div key={member.fid} className={styles.member}>
-                    <img src={member.pfp_url} alt={member.username} width={32} height={32} />
-                    <span>{member.display_name} (@{member.username})</span>
-                  </div>
-                ))}
-              </div>
-              <div className={styles.row}>
-                {familyProfiles.slice(2, 5).map((member, index) => (
-                  <div key={member.fid} className={styles.member}>
-                    <img src={member.pfp_url} alt={member.username} width={32} height={32} />
-                    <span>{member.display_name} (@{member.username})</span>
-                  </div>
-                ))}
-              </div>
+    <div className={styles.card}>
+      <h2 className={styles.title}>{cardTitle}</h2>
+      <div className={styles.tree}>
+        <div className={styles.row}>
+          {familyProfiles.slice(0, 1).map((member) => (
+            <div key={member.fid} className={styles.member}>
+              <img src={member.pfp_url} alt={member.username} />
+              <span>{member.display_name}</span>
             </div>
-          )}
-        </Modal>
-      )}
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={closeToast}
-        />
-      )}
-    </>
+          ))}
+        </div>
+        <div className={styles.row}>
+          {familyProfiles.slice(1, 3).map((member) => (
+            <div key={member.fid} className={styles.member}>
+              <img src={member.pfp_url} alt={member.username} />
+              <span>{member.display_name}</span>
+            </div>
+          ))}
+        </div>
+        <div className={styles.row}>
+          {familyProfiles.slice(3, 5).map((member) => (
+            <div key={member.fid} className={styles.member}>
+              <img src={member.pfp_url} alt={member.username} />
+              <span>{member.display_name}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }

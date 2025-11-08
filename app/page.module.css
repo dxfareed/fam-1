@@ -39,30 +39,27 @@
   text-decoration: underline;
 }
 
-.win98Button {
-  background: #c0c0c0;
-  border-top: 2px solid #ffffff;
-  border-left: 2px solid #ffffff;
-  border-right: 2px solid #000000;
-  border-bottom: 2px solid #000000;
-  padding: 5px 10px;
-  font-family: 'W95FA', sans-serif;
+.modernButton {
+  background: linear-gradient(to bottom, #4A4A4A, #2C2C2C);
+  border: 1px solid #555;
+  border-radius: 12px;
+  color: white;
+  padding: 10px 20px;
+  font-size: 1rem;
   cursor: pointer;
+  transition: all 0.2s ease-in-out;
 }
 
-.win98Button:active {
-  border-top: 2px solid #000000;
-  border-left: 2px solid #000000;
-  border-right: 2px solid #ffffff;
-  border-bottom: 2px solid #ffffff;
+.modernButton:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
 }
 
-.win98Address {
-  background: #c0c0c0;
-  border-top: 2px solid #808080;
-  border-left: 2px solid #808080;
-  border-right: 2px solid #ffffff;
-  border-bottom: 2px solid #ffffff;
-  padding: 5px 10px;
-  font-family: 'W95FA', sans-serif;
+.modernAddress {
+  background: #2C2C2C;
+  border: 1px solid #555;
+  border-radius: 12px;
+  color: white;
+  padding: 10px 20px;
+  font-size: 1rem;
 }
