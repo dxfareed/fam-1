@@ -6,7 +6,7 @@ import { getFamily } from '@/lib/family';
 import { fetchUsers } from '@/lib/user';
 import { User } from '@/lib/neynar';
 import styles from './FamilyTree.module.css';
-import { checkNftOwnership } from '@/lib/nft';
+import { checkNftOwnership } from '@/lib/nft-client';
 import { withRetry } from '@/lib/retry';
 
 const ModernLoader = () => <div className={styles.loader}></div>;

@@ -1,14 +1,9 @@
-CREATE TABLE "FamilyCache" (
+-- CreateTable
+CREATE TABLE "NftCache" (
     "fid" BIGINT NOT NULL,
-    "pfpUrl" TEXT,
-    "family" JSONB NOT NULL,
-    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "FamilyCache_pkey" PRIMARY KEY ("fid")
-);
+    "holdingNft" BOOLEAN NOT NULL,
+    "nftImage" TEXT,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
-CREATE TABLE "UserCache" (
-    "fid" BIGINT NOT NULL,
-    "userProfile" JSONB NOT NULL,
-    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "UserCache_pkey" PRIMARY KEY ("fid")
+    CONSTRAINT "NftCache_pkey" PRIMARY KEY ("fid")
 );
