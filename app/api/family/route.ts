@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const url = `https://api.neynar.com/v2/farcaster/user/best_friends?limit=5&fid=${fid}`;
+    const url = `https://api.neynar.com/v2/farcaster/user/best_friends?limit=30&fid=${fid}`;
     const options = {
       method: 'GET',
       headers: { 'x-api-key': NEYNAR_API_KEY },
