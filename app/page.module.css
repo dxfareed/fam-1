@@ -40,7 +40,7 @@
 }
 
 .modernButton {
-  background: linear-gradient(to bottom, #4A4A4A, #2C2C2C);
+  background: linear-gradient(to bottom, #4CAF50, #45a049);
   border: 1px solid #555;
   border-radius: 12px;
   color: white;
@@ -52,7 +52,7 @@
 
 .modernButton:hover {
   transform: scale(1.05);
-  box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
 }
 
 .modernAddress {
@@ -62,4 +62,38 @@
   color: white;
   padding: 10px 20px;
   font-size: 1rem;
+}
+
+.generator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.imageContainer {
+  width: 256px;
+  height: 256px;
+  border: 2px solid #555;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.errorText {
+  color: #ff4d4d;
+  font-size: 1rem;
+  margin-top: 1rem;
+}
+
+.modernSelect {
+  background: #2C2C2C;
+  border: 1px solid #555;
+  border-radius: 12px;
+  color: white;
+  padding: 10px 20px;
+  font-size: 1rem;
+  cursor: pointer;
 }

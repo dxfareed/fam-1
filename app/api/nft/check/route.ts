@@ -1,16 +1,23 @@
 // app/api/nft/check/route.ts
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { checkNftOwnershipOnServer } from '@/lib/nft';
-import { User } from '@/lib/neynar';
+import { fetchUsersOnServer } from '@/lib/neynar-server';
+import { isAuthenticated } from '@/lib/auth';
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const fid = await isAuthenticated(req);
+  if (fid instanceof NextResponse) {
+    return fid;
+  }
+
   try {
-    const user = (await req.json()) as User;
-    if (!user || !user.fid) {
-      return NextResponse.json({ error: 'Invalid user data' }, { status: 400 });
+    // Fetch the full user object to ensure verified_addresses is present
+    const [fullUser] = await fetchUsersOnServer([fid], fid);
+    if (!fullUser) {
+      return NextResponse.json({ error: 'Failed to fetch full user profile' }, { status: 500 });
     }
 
-    const result = await checkNftOwnershipOnServer(user);
+    const result = await checkNftOwnershipOnServer(fullUser);
     return NextResponse.json(result);
   } catch (error) {
     console.error('API Error:', error);

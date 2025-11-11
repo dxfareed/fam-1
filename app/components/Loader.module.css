@@ -1,20 +1,13 @@
 .loader {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top: 4px solid #fff;
+  width: 24px;
+  height: 24px;
+  animation: spin 1s linear infinite;
 }
 
-.hourglass {
-  width: 32px;
-  height: 32px;
-  animation: hourglass-spin 2s infinite;
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><path fill="%23000" d="M6 2h20v2H6zm0 26h20v2H6zM10 6h12v2H10zm0 0l6 8-6 8h12l-6-8 6-8zM10 22h12v2H10z"/></svg>');
-  background-repeat: no-repeat;
-  background-position: center;
-}
-
-@keyframes hourglass-spin {
+@keyframes spin {
   0% { transform: rotate(0deg); }
-  100% { transform: rotate(180deg); }
+  100% { transform: rotate(360deg); }
 }
