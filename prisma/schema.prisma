@@ -189,3 +189,9 @@ enum MatchStatus {
   CANCELLED
   COMPLETED
 }
+
+model UserNFTs {
+  ownerFid  BigInt   @id
+  nfts      Json
+  updatedAt DateTime @updatedAt
+}

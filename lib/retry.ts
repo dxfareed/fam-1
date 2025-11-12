@@ -1,7 +1,7 @@
 // --- Utility for retrying failed operations ---
 export const withRetry = async <T>(
   operation: () => Promise<T>,
-  retries = 3,
+  retries = 5,
   delay = 2000 // 2 seconds
 ): Promise<T> => {
   let lastError: Error | undefined;

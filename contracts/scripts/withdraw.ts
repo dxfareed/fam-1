@@ -33,7 +33,9 @@ async function main() {
   const receipt = await tx.wait();
 
   console.log("Withdrawal transaction confirmed!");
+  //@ts-ignore
   console.log(`Block Number: ${receipt.blockNumber}`);
+  //@ts-ignore
   console.log(`Gas Used: ${receipt.gasUsed.toString()}`);
 }
 

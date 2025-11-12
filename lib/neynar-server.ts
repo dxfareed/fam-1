@@ -1,4 +1,3 @@
-// lib/neynar-server.ts
 import { User, BestFriend } from "./neynar";
 import { withRetry } from "./retry";
 
@@ -35,20 +34,15 @@ export async function getFamilyOnServer(fid: number): Promise<BestFriend[]> {
 export async function fetchUsersOnServer(fids: number[], viewerFid: number): Promise<User[]> {
   const fidsStr = fids.join(',');
   const url = `https://api.neynar.com/v2/farcaster/user/bulk?fids=${fidsStr}&viewer_fid=${viewerFid}`;
-  console.log(`[neynar-server] Fetching users from URL: ${url}`);
-
+ 
   try {
-    const response = await fetch(url, options);
-    console.log(`[neynar-server] Response status: ${response.status}`);
-    
+    const response = await fetch(url, options);   
     const responseBody = await response.text();
     
     if (!response.ok) {
-      console.error(`[neynar-server] Error response body: ${responseBody}`);
       throw new Error(`Failed to fetch users from Neynar API: ${response.statusText}`);
     }
 
-    console.log(`[neynar-server] Response body: ${responseBody}`);
     const data = JSON.parse(responseBody);
     return data.users as User[];
   } catch (error) {

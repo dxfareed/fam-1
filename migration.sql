@@ -1,9 +1,7 @@
--- CreateTable
-CREATE TABLE "NftCache" (
-    "fid" BIGINT NOT NULL,
-    "holdingNft" BOOLEAN NOT NULL,
-    "nftImage" TEXT,
+CREATE TABLE "UserNFTs" (
+    "ownerFid" BIGINT NOT NULL,
+    "nfts" JSONB NOT NULL,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "NftCache_pkey" PRIMARY KEY ("fid")
+    CONSTRAINT "UserNFTs_pkey" PRIMARY KEY ("ownerFid")
 );

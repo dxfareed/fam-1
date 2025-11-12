@@ -7,6 +7,8 @@ import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { sdk } from '@farcaster/miniapp-sdk';
 import Loader from "./components/Loader";
+import Gallery from "./components/Gallery";
+import Navigation from "./components/Navigation";
 import { withRetry } from "../lib/retry";
 import { religiousWarpletAbi } from "../lib/abi";
 import { parseEther } from "viem";
@@ -27,6 +29,7 @@ export default function Home() {
   const [errorTimeout, setErrorTimeout] = useState<NodeJS.Timeout | null>(null);
   const [userRejectedError, setUserRejectedError] = useState(false);
   const [selectedReligion, setSelectedReligion] = useState('Muslim');
+  const [activeView, setActiveView] = useState<'home' | 'gallery'>('home');
 
   const handleSetError = (errorMessage: string) => {
     if (errorTimeout) {
@@ -114,10 +117,10 @@ export default function Home() {
       if (res.ok) {
         setGeneratedImageUrl(data.newImageUrl);
       } else {
-        handleSetError(data.error || "Failed to generate image.");
+        handleSetError("rate limited. please try again");
       }
     } catch (err) {
-      handleSetError("Failed to generate image.");
+      handleSetError("rate limited. please try again");
       console.error(err);
     } finally {
       setIsGenerating(false);
@@ -136,54 +139,45 @@ export default function Home() {
     }
   }, [mintError]);
 
-  const handleMint = async () => {
-    console.log("DEBUG: handleMint triggered.");
-    if (!generatedImageUrl || !address) {
-      console.error("DEBUG: Mint aborted. Missing generated image URL or wallet address.");
-      return;
-    }
-    setIsPreparing(true);
-    setError(null);
-    try {
-      // 1. Get the tokenURI from our backend
-      console.log("DEBUG: Calling backend API '/api/nft/mint'...");
-      const { token } = await sdk.quickAuth.getToken();
-      const res = await fetch('/api/nft/mint', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ imageData: generatedImageUrl }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to prepare NFT.");
-      }
-      const { tokenUri } = data;
-      console.log("DEBUG: Received tokenURI from backend:", tokenUri);
-
-      // 2. Call the smart contract to mint
-      const mintArgs = {
-        address: CONTRACT_ADDRESS,
-        abi: religiousWarpletAbi,
-        functionName: 'safeMint',
-        args: [address, tokenUri],
-        value: parseEther("0.0003"),
+  useEffect(() => {
+    if (isConfirmed && hash && generatedImageUrl) {
+      const saveMintToDb = async () => {
+        try {
+          const { token } = await sdk.quickAuth.getToken();
+          await fetch('/api/nft/mint', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({ 
+              imageData: generatedImageUrl,
+              txHash: hash 
+            }),
+          });
+        } catch (error) {
+          console.error("Failed to save mint to DB:", error);
+          handleSetError("Minted, but failed to save to gallery.");
+        }
       };
-      console.log("DEBUG: Calling writeContract with args:", mintArgs);
-      writeContract(mintArgs);
-      console.log("DEBUG: writeContract call has been made.");
-
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "An unknown error occurred.";
-      console.error("DEBUG: Error in handleMint catch block:", errorMessage);
-      handleSetError(`Failed to prepare mint: ${errorMessage}`);
-    } finally {
-      setIsPreparing(false);
-      console.log("DEBUG: handleMint finished.");
+      saveMintToDb();
     }
+  }, [isConfirmed, hash, generatedImageUrl]);
+
+  const handleMint = async () => {
+    if (!generatedImageUrl || !address) return;
+
+    // This is a placeholder URI. The real one is generated on the backend
+    // after the transaction is confirmed and the hash is sent.
+    const placeholderTokenUri = "ipfs://bafkreie3c7t6g3k43r5n7t3g6j6z6z6z6z6z6z6z6z6z6z6z6z6z6z";
+
+    writeContract({
+      address: CONTRACT_ADDRESS,
+      abi: religiousWarpletAbi,
+      functionName: 'safeMint',
+      args: [address, placeholderTokenUri],
+      value: parseEther("0.0003"),
+    });
   };
 
   const handleShare = () => {
@@ -212,69 +206,77 @@ export default function Home() {
         )}
       </header>
 
-      <div className={styles.content}>
-        {isCheckingNft && <Loader />}
-        {error && <p className={styles.errorText}>{error}</p>}
-        
-        {!isCheckingNft && !error && nftImageUrl && (
-          <div className={styles.generator}>
-            <div className={styles.imageContainer}>
-              <Image src={generatedImageUrl || nftImageUrl} alt="Creature" width={256} height={256} />
-            </div>
-            <select 
-              className={styles.modernSelect}
-              value={selectedReligion}
-              onChange={(e) => setSelectedReligion(e.target.value)}
-              disabled={!!generatedImageUrl}
-            >
-              {religions.map(religion => (
-                <option key={religion} value={religion}>{religion}</option>
-              ))}
-            </select>
-
-            <button
-              className={styles.modernButton}
-              onClick={
-                isConfirmed
-                  ? handleShare
-                  : generatedImageUrl
-                  ? handleMint
-                  : handleGenerateSmile
-              }
-              disabled={isGenerating || isPreparing || isMinting}
-            >
-              {isGenerating ? (
-                <Loader />
-              ) : isPreparing ? (
-                "Preparing..."
-              ) : isMinting ? (
-                "Minting..."
-              ) : isConfirmed ? (
-                "Share"
-              ) : generatedImageUrl ? (
-                "Mint NFT"
-              ) : (
-                "Make it Religious!"
-              )}
-            </button>
-
-            {isConfirming && <p>Waiting for confirmation...</p>}
-            {isConfirmed && (
-              <div>
-                <p>Minted Successfully!</p>
-                <a 
-                  href={`https://sepolia.basescan.org/tx/${hash}`} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className={styles.link}
+      <main className={`${styles.content} ${activeView === 'gallery' ? styles.alignTop : ''}`}>
+        {activeView === 'home' ? (
+          <>
+            {isCheckingNft && <Loader />}
+            {error && <p className={styles.errorText}>{error}</p>}
+            
+            {!isCheckingNft && !error && nftImageUrl && (
+              <div className={styles.generator}>
+                <div className={styles.imageContainer}>
+                  <Image src={generatedImageUrl || nftImageUrl} alt="Creature" width={256} height={256} />
+                </div>
+                <select 
+                  className={styles.modernSelect}
+                  value={selectedReligion}
+                  onChange={(e) => setSelectedReligion(e.target.value)}
+                  disabled={!!generatedImageUrl}
                 >
-                  View on Basescan
-                </a>
+                  {religions.map(religion => (
+                    <option key={religion} value={religion}>{religion}</option>
+                  ))}
+                </select>
+
+                <button
+                  className={styles.modernButton}
+                  onClick={
+                    isConfirmed
+                      ? handleShare
+                      : generatedImageUrl
+                      ? handleMint
+                      : handleGenerateSmile
+                  }
+                  disabled={isGenerating || isPreparing || isMinting}
+                >
+                  {isGenerating ? (
+                    <Loader />
+                  ) : isPreparing ? (
+                    "Preparing..."
+                  ) : isMinting ? (
+                    "Minting..."
+                  ) : isConfirmed ? (
+                    "Share"
+                  ) : generatedImageUrl ? (
+                    "Mint NFT"
+                  ) : (
+                    "Make it Religious!"
+                  )}
+                </button>
+
+                {isConfirming && <p>Waiting for confirmation...</p>}
+                {isConfirmed && (
+                  <div>
+                    <p>Minted Successfully!</p>
+                    <a 
+                      href={`https://sepolia.basescan.org/tx/${hash}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className={styles.link}
+                    >
+                      View on Basescan
+                    </a>
+                  </div>
+                )}
               </div>
             )}
-          </div>
+          </>
+        ) : (
+          <Gallery setActiveView={setActiveView} activeView={activeView} />
         )}
-      </div>
+      </main>
+      
+      <Navigation activeView={activeView} setActiveView={setActiveView} />
     </div>
   );
 }

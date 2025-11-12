@@ -30,7 +30,7 @@ export async function isAuthenticated(request: NextRequest): Promise<number | Ne
   }
 }
 
-function getUrlHost(request: NextRequest) {
+export function getUrlHost(request: NextRequest) {
   const origin = request.headers.get("origin");
   if (origin) {
     try {

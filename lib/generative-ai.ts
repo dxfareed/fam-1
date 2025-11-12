@@ -42,6 +42,7 @@ export async function getCreatureGender(imageUrl: string): Promise<string> {
     const result = await genAI.models.generateContent({
       model: "gemini-2.5-flash-image-preview",
       contents: [{ role: "user", parts: [{ text: prompt }, imagePart] }],
+      //@ts-ignore
       safetySettings: [
         { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
         { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
@@ -52,6 +53,7 @@ export async function getCreatureGender(imageUrl: string): Promise<string> {
 
     const part = result.candidates?.[0]?.content?.parts?.[0];
     if (part && 'text' in part) {
+      //@ts-ignore
       const gender = part.text.trim().toLowerCase();
       if (['male', 'female', 'unknown'].includes(gender)) {
         return gender;
@@ -72,6 +74,7 @@ export async function getCreatureDescription(imageUrl: string): Promise<string> 
     const result = await genAI.models.generateContent({
       model: "gemini-2.5-flash-image-preview",
       contents: [{ role: "user", parts: [{ text: prompt }, imagePart] }],
+      //@ts-ignore
       safetySettings: [
         { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
         { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
@@ -82,6 +85,7 @@ export async function getCreatureDescription(imageUrl: string): Promise<string> 
 
     const part = result.candidates?.[0]?.content?.parts?.[0];
     if (part && 'text' in part) {
+      //@ts-ignore
       return part.text.trim();
     }
     return 'a creature';
@@ -95,16 +99,50 @@ export async function makeCreatureSmile(imageUrl: string, religion: string, gend
   try {
     const imagePart = await urlToGenerativePart(imageUrl, "image/png");
 
-    let prompt;
+    const religiousItems: { [key: string]: string } = {
+      Muslim: 'the Holy Quran',
+      Christian: 'the Holy Bible',
+      Jewish: 'a Torah scroll',
+      Hindu: 'the Vedas',
+      Satanic: 'a book of shadows',
+      Buddhist: 'prayer beads',
+    };
+
+    const expressions = ['a confident expression', 'a gentle smile', 'an energized expression, like it is ready for action'];
+    const randomExpression = expressions[Math.floor(Math.random() * expressions.length)];
+
+    const baseInstruction = `Given the image of this ${gender} creature, which looks like ${description}, redraw it. The creature's core appearance and species must remain the same.`;
+    const expressionInstruction = `It should have ${randomExpression} on its face.`;
+    const poseInstruction = `It should be in a cool, dynamic, and interesting pose.`;
+    const backgroundInstruction = `The background must be a simple, single solid color that complements the colors of the new outfit.`;
+    const finalInstruction = `Return only the final image, with no text or annotations.`;
+
+    let outfitInstruction = '';
     if (religion === 'Christian') {
-      const christianStyles = ['full Catholic', 'modern Christian dressed for church'];
+      const christianStyles = ['modern Catholic priest/nun', 'modern Evangelical pastor', 'modern Christian enjoying a church service'];
       const randomStyle = christianStyles[Math.floor(Math.random() * christianStyles.length)];
-      prompt = `Given the image of this ${gender} creature, which looks like ${description}, dress it in unique ${randomStyle} attire that is inspired by its appearance. The character should remain the same. Return only the image, no text.`;
+      outfitInstruction = `Dress it in unique, ${randomStyle} attire.`;
     } else if (religion === 'Jewish') {
-      prompt = `Given the image of this ${gender} creature, which looks like ${description}, dress it as a religious ${religion} in their 40s. The attire should be unique and inspired by the creature's appearance. The character should remain the same. Return only the image, no text.`;
+      outfitInstruction = `Dress it in unique, modern religious Jewish attire, making it look like it's in its 40s.`;
     } else {
-      prompt = `Given the image of this ${gender} creature, which looks like ${description}, dress it in unique religious ${religion} attire that is inspired by its appearance. The character should remain the same, but its attire should be changed. Return only the image, no text.`;
+      outfitInstruction = `Dress it in unique, modern religious ${religion} attire.`;
     }
+    outfitInstruction += ` The outfit should be inspired by the creature's original appearance.`;
+
+    let itemInstruction = '';
+    if (Math.random() < 0.5 && religiousItems[religion]) {
+      itemInstruction = `The creature can be holding ${religiousItems[religion]}.`;
+    }
+
+    const prompt = [
+      baseInstruction,
+      outfitInstruction,
+      expressionInstruction,
+      poseInstruction,
+      itemInstruction,
+      backgroundInstruction,
+      finalInstruction
+    ].filter(Boolean).join(' ');
 
     const result = await genAI.models.generateContent({
       model: "gemini-2.5-flash-image-preview",
@@ -133,11 +171,11 @@ export async function makeCreatureSmile(imageUrl: string, religion: string, gend
       ],
     });
     
-    console.log("Gemini API result:", JSON.stringify(result, null, 2));
     const part = result.candidates?.[0]?.content?.parts?.[0];
 
     if (part && 'inlineData' in part) {
         const generatedImage = part.inlineData;
+        //@ts-ignore
         return `data:${generatedImage.mimeType};base64,${generatedImage.data}`;
     }
     

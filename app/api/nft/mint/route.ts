@@ -1,33 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAuthenticated } from "@/lib/auth";
+import { withRetry } from "@/lib/retry";
 import axios from 'axios';
+import prisma from "@/lib/prisma";
+import { z } from 'zod';
+
+// Define a schema for the incoming request body
+const mintRequestSchema = z.object({
+  imageData: z.string(),
+  txHash: z.string(),
+});
 
 async function uploadToPinata(imageData: string, fid: number) {
   const pinataApiKey = process.env.PINATA_API_KEY!;
   const pinataSecretApiKey = process.env.PINATA_API_SECRET!;
 
-  // Convert base64 to a Blob
   const imageBuffer = Buffer.from(imageData.split(",")[1], "base64");
   const imageBlob = new Blob([imageBuffer], { type: "image/png" });
 
-  // Create a FormData object and append the file and options
   const form = new FormData();
   form.append("file", imageBlob, `ReligiousWarplet_${fid}_${Date.now()}.png`);
+  form.append("pinataMetadata", JSON.stringify({ name: `ReligiousWarplet Image for FID ${fid}` }));
+  form.append("pinataOptions", JSON.stringify({ cidVersion: 1 }));
 
-  const pinataMetadata = JSON.stringify({
-    name: `ReligiousWarplet Image for FID ${fid}`,
-  });
-  form.append("pinataMetadata", pinataMetadata);
-
-  const pinataOptions = JSON.stringify({
-    cidVersion: 1,
-  });
-  form.append("pinataOptions", pinataOptions);
-
-  // Pin the file to IPFS using Axios
   const pinFileResponse = await axios.post("https://api.pinata.cloud/pinning/pinFileToIPFS", form, {
     headers: {
-      // Axios will automatically set the Content-Type with the correct boundary
       'pinata_api_key': pinataApiKey,
       'pinata_secret_api_key': pinataSecretApiKey,
     },
@@ -36,7 +33,6 @@ async function uploadToPinata(imageData: string, fid: number) {
   const { IpfsHash: imageIpfsHash } = pinFileResponse.data;
   const imageUrl = `ipfs://${imageIpfsHash}`;
 
-  // Create and pin the metadata JSON
   const metadata = {
     name: "Religious Warplet",
     description: "A unique piece of religious art generated for the holder.",
@@ -57,12 +53,13 @@ async function uploadToPinata(imageData: string, fid: number) {
   });
 
   const { IpfsHash: metadataIpfsHash } = pinMetadataResponse.data;
-  return `ipfs://${metadataIpfsHash}`;
+  const tokenUri = `ipfs://${metadataIpfsHash}`;
+  
+  return { tokenUri, imageUrl };
 }
 
 export async function POST(request: NextRequest) {
   if (!process.env.PINATA_API_KEY || !process.env.PINATA_API_SECRET) {
-    console.error("Pinata API keys are not configured.");
     return NextResponse.json({ message: "Server configuration error: Missing Pinata credentials." }, { status: 500 });
   }
 
@@ -71,19 +68,50 @@ export async function POST(request: NextRequest) {
     return fid;
   }
 
-  const { imageData } = await request.json();
-  if (!imageData) {
-    return NextResponse.json({ message: "Missing imageData" }, { status: 400 });
+  const body = await request.json();
+  const validation = mintRequestSchema.safeParse(body);
+
+  if (!validation.success) {
+    return NextResponse.json({ message: "Invalid request body", errors: validation.error.errors }, { status: 400 });
   }
 
+  const { imageData, txHash } = validation.data;
+
   try {
-    console.log("Starting IPFS upload process with Axios and native FormData...");
-    const tokenUri = await uploadToPinata(imageData, fid);
-    console.log("Successfully uploaded to IPFS. Token URI:", tokenUri);
+    const { tokenUri, imageUrl } = await withRetry(() => uploadToPinata(imageData, fid));
+
+    const newNft = {
+      imageUrl,
+      tokenUri,
+      txHash,
+      mintedAt: new Date().toISOString(),
+    };
+
+    await withRetry(async () => {
+      const userNfts = await prisma.userNFTs.findUnique({
+        where: { ownerFid: BigInt(fid) },
+      });
+
+      if (userNfts) {
+        const updatedNfts = [...(userNfts.nfts as any[]), newNft];
+        await prisma.userNFTs.update({
+          where: { ownerFid: BigInt(fid) },
+          data: { nfts: updatedNfts },
+        });
+      } else {
+        await prisma.userNFTs.create({
+          data: {
+            ownerFid: BigInt(fid),
+            nfts: [newNft],
+          },
+        });
+      }
+    });
+
     return NextResponse.json({ tokenUri }, { status: 200 });
   } catch (error) {
-    console.error("Error during IPFS upload process:", error);
+    console.error("Error during mint process:", error);
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-    return NextResponse.json({ message: `Error uploading to IPFS: ${errorMessage}` }, { status: 500 });
+    return NextResponse.json({ message: `Error: ${errorMessage}` }, { status: 500 });
   }
 }
