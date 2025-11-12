@@ -1,5 +1,5 @@
 {
-  "name": "Warplet Family",
+  "name": "Religious Warplet",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -19,9 +19,11 @@
     "@farcaster/frame-wagmi-connector": "^1.0.0",
     "@farcaster/miniapp-sdk": "^0.2.1",
     "@farcaster/miniapp-wagmi-connector": "^1.1.0",
+    "@google/genai": "^0.14.0",
     "@neynar/nodejs-sdk": "^3.34.0",
     "@neynar/react": "^1.2.20",
     "@pigment-css/react": "^0.0.30",
+    "@pinata/sdk": "^2.1.0",
     "@prisma/client": "^6.16.2",
     "@rainbow-me/rainbowkit": "^2.2.8",
     "@reown/appkit": "^1.8.9",
@@ -30,6 +32,7 @@
     "@vercel/analytics": "^1.5.0",
     "@vercel/blob": "^2.0.0",
     "@walletconnect/modal": "^2.7.0",
+    "axios": "^1.13.2",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "eruda": "^3.4.3",
@@ -45,10 +48,9 @@
     "react": "^19.1.1",
     "react-confetti": "^6.4.0",
     "react-dom": "^19.1.1",
-    "viem": "^2.38.0",
+    "viem": "^2.38.6",
     "wagmi": "^2.18.0",
-    "web-push": "^3.6.7",
-    "@google/genai": "^0.14.0"
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
