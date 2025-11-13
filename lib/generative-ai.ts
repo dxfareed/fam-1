@@ -109,13 +109,25 @@ export async function makeCreatureSmile(imageUrl: string, religion: string, gend
     };
 
     const expressions = ['a confident expression', 'a gentle smile', 'an energized expression, like it is ready for action'];
-    const randomExpression = expressions[Math.floor(Math.random() * expressions.length)];
+    let randomExpression = expressions[Math.floor(Math.random() * expressions.length)];
+
+    const thematicBackgrounds: { [key: string]: string } = {
+      Muslim: 'a background with rich and varied Islamic architectural patterns, geometric designs, or elements suggesting a vibrant, peaceful oasis or a scholarly setting, with a soft, warm ambiance',
+      Christian: 'a background with subtle Christian iconography, or a serene and contemplative atmosphere',
+      Jewish: 'a background with subtle Jewish cultural motifs, or a wise and ancient scholarly feel',
+      Hindu: 'a background with subtle Hindu artistic elements, or a vibrant and spiritual energy',
+      Buddhist: 'a background with subtle Buddhist symbols, or a calm and meditative environment',
+      Satanic: 'a background with subtle dark aesthetic elements, or a powerful and mysterious atmosphere',
+    };
 
     const baseInstruction = `Given the image of this ${gender} creature, which looks like ${description}, redraw it. The creature's core appearance and species must remain the same.`;
-    const expressionInstruction = `It should have ${randomExpression} on its face.`;
     const poseInstruction = `It should be in a cool, dynamic, and interesting pose.`;
-    const backgroundInstruction = `The background must be a simple, single solid color that complements the colors of the new outfit.`;
     const finalInstruction = `Return only the final image, with no text or annotations.`;
+
+    let expressionInstruction = `It should have ${randomExpression} on its face.`;
+    if (religion === 'Satanic') {
+      expressionInstruction = `It should have a powerful, intense, or mischievous expression on its face, not a smile.`;
+    }
 
     let outfitInstruction = '';
     if (religion === 'Christian') {
@@ -133,6 +145,8 @@ export async function makeCreatureSmile(imageUrl: string, religion: string, gend
     if (Math.random() < 0.5 && religiousItems[religion]) {
       itemInstruction = `The creature can be holding ${religiousItems[religion]}.`;
     }
+
+    const backgroundInstruction = `The background must be a ${thematicBackgrounds[religion] || 'simple, single solid color that complements the colors of the new outfit.'} and match the outfit's style.`;
 
     const prompt = [
       baseInstruction,

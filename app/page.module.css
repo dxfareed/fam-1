@@ -119,3 +119,18 @@
   font-weight: bold;
   font-size: 1.2rem;
 }
+
+.buttonGroup {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.imageFadeIn {
+  animation: fadeIn 1.8s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

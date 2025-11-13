@@ -18,7 +18,7 @@ const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string
 export default function Home() {
   const { isConnected, address, isConnecting } = useAccount();
   const { openConnectModal } = useConnectModal();
-  const { data: hash, writeContract, isPending: isMinting, error: mintError } = useWriteContract();
+  const { data: hash, writeContract, isPending: isMinting, error: mintError, reset } = useWriteContract();
 
   const [nftImageUrl, setNftImageUrl] = useState<string | null>(null);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
@@ -42,7 +42,7 @@ export default function Home() {
     setErrorTimeout(timeout);
   };
 
-  const religions = ['Muslim', 'Christian', 'Buddhist', 'Jewish', 'Hindu', 'Satanic'];
+  const religions = ['Muslim', 'Christian', 'Buddhist', 'Jewish', 'Hindu', 'Satanic', 'Warplette'];
 
   const shortenAddress = (addr: string) => {
     if (!addr) return '';
@@ -184,6 +184,11 @@ export default function Home() {
     console.log("DEBUG: Share functionality to be implemented.");
   };
 
+  const handleGenerateNew = () => {
+    setGeneratedImageUrl(null);
+    reset();
+  };
+
   return (
     <div className={styles.container}>
       {userRejectedError && (
@@ -215,7 +220,14 @@ export default function Home() {
             {!isCheckingNft && !error && nftImageUrl && (
               <div className={styles.generator}>
                 <div className={styles.imageContainer}>
-                  <Image src={generatedImageUrl || nftImageUrl} alt="Creature" width={256} height={256} />
+                  <Image
+                    key={generatedImageUrl || nftImageUrl}
+                    src={generatedImageUrl || nftImageUrl}
+                    alt="Creature"
+                    width={256}
+                    height={256}
+                    className={styles.imageFadeIn}
+                  />
                 </div>
                 <select 
                   className={styles.modernSelect}
@@ -228,31 +240,38 @@ export default function Home() {
                   ))}
                 </select>
 
-                <button
-                  className={styles.modernButton}
-                  onClick={
-                    isConfirmed
-                      ? handleShare
-                      : generatedImageUrl
-                      ? handleMint
-                      : handleGenerateSmile
-                  }
-                  disabled={isGenerating || isPreparing || isMinting}
-                >
-                  {isGenerating ? (
-                    <Loader />
-                  ) : isPreparing ? (
-                    "Preparing..."
-                  ) : isMinting ? (
-                    "Minting..."
-                  ) : isConfirmed ? (
-                    "Share"
-                  ) : generatedImageUrl ? (
-                    "Mint NFT"
-                  ) : (
-                    "Make it Religious!"
-                  )}
-                </button>
+                {isConfirmed ? (
+                  <div className={styles.buttonGroup}>
+                    <button className={styles.modernButton} onClick={handleShare}>
+                      Share
+                    </button>
+                    <button className={styles.modernButton} onClick={handleGenerateNew}>
+                      Generate New
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    className={styles.modernButton}
+                    onClick={
+                      generatedImageUrl
+                        ? handleMint
+                        : handleGenerateSmile
+                    }
+                    disabled={isGenerating || isPreparing || isMinting}
+                  >
+                    {isGenerating ? (
+                      <Loader />
+                    ) : isPreparing ? (
+                      "Preparing..."
+                    ) : isMinting ? (
+                      "Minting..."
+                    ) : generatedImageUrl ? (
+                      "Mint NFT"
+                    ) : (
+                      "Make it Religious!"
+                    )}
+                  </button>
+                )}
 
                 {isConfirming && <p>Waiting for confirmation...</p>}
                 {isConfirmed && (
