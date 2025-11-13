@@ -12,6 +12,7 @@ import Navigation from "./components/Navigation";
 import { withRetry } from "../lib/retry";
 import { religiousWarpletAbi } from "../lib/abi";
 import { parseEther } from "viem";
+import { useUser } from "./context/UserContext";
 
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`;
 
@@ -19,6 +20,7 @@ export default function Home() {
   const { isConnected, address, isConnecting } = useAccount();
   const { openConnectModal } = useConnectModal();
   const { data: hash, writeContract, isPending: isMinting, error: mintError, reset } = useWriteContract();
+  const { fid } = useUser();
 
   const [nftImageUrl, setNftImageUrl] = useState<string | null>(null);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
@@ -42,7 +44,7 @@ export default function Home() {
     setErrorTimeout(timeout);
   };
 
-  const religions = ['Muslim', 'Christian', 'Buddhist', 'Jewish', 'Hindu', 'Satanic', 'Warplette'];
+  const religions = ['Warplette','Christian' ,'Muslim', 'Buddhist', 'Jewish', 'Hindu', 'Satanic'];
 
   const shortenAddress = (addr: string) => {
     if (!addr) return '';
@@ -167,8 +169,6 @@ export default function Home() {
   const handleMint = async () => {
     if (!generatedImageUrl || !address) return;
 
-    // This is a placeholder URI. The real one is generated on the backend
-    // after the transaction is confirmed and the hash is sent.
     const placeholderTokenUri = "ipfs://bafkreie3c7t6g3k43r5n7t3g6j6z6z6z6z6z6z6z6z6z6z6z6z6z6z";
 
     writeContract({
@@ -181,7 +181,28 @@ export default function Home() {
   };
 
   const handleShare = () => {
-    console.log("DEBUG: Share functionality to be implemented.");
+    if (!fid || !generatedImageUrl) {
+      console.error("FID or generated image URL is not available for sharing.");
+      handleSetError("Cannot share. Missing user data or image.");
+      return;
+    }
+
+    try {
+      const appUrl = process.env.NEXT_PUBLIC_URL || '';
+      const shareUrl = new URL('/share/frame', appUrl);
+      shareUrl.searchParams.set('fid', fid.toString());
+      shareUrl.searchParams.set('imageUrl', generatedImageUrl);
+
+      const castText = "Check out my Warplet Religion";
+
+      sdk.actions.composeCast({
+        text: castText,
+        embeds: [shareUrl.toString()],
+      });
+    } catch (error) {
+      console.error('Failed to compose cast:', error);
+      handleSetError("Could not create share cast.");
+    }
   };
 
   const handleGenerateNew = () => {
@@ -268,7 +289,7 @@ export default function Home() {
                     ) : generatedImageUrl ? (
                       "Mint NFT"
                     ) : (
-                      "Make it Religious!"
+                      "Generate"
                     )}
                   </button>
                 )}

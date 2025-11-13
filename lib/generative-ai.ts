@@ -14,25 +14,25 @@ if (!API_KEY) {
 const genAI = new genai.GoogleGenAI({ apiKey: API_KEY });
 
 async function urlToGenerativePart(url: string, mimeType: string) {
-    if (url.startsWith('data:')) {
-        const [meta, base64Data] = url.split(',');
-        const [_, inferredMimeType] = meta.split(':');
-        return {
-            inlineData: {
-                data: base64Data,
-                mimeType: inferredMimeType.split(';')[0],
-            },
-        };
-    }
-    const response = await fetch(url);
-    const buffer = await response.arrayBuffer();
+  if (url.startsWith('data:')) {
+    const [meta, base64Data] = url.split(',');
+    const [_, inferredMimeType] = meta.split(':');
     return {
       inlineData: {
-        data: Buffer.from(buffer).toString("base64"),
-        mimeType,
+        data: base64Data,
+        mimeType: inferredMimeType.split(';')[0],
       },
     };
   }
+  const response = await fetch(url);
+  const buffer = await response.arrayBuffer();
+  return {
+    inlineData: {
+      data: Buffer.from(buffer).toString("base64"),
+      mimeType,
+    },
+  };
+}
 
 export async function getCreatureGender(imageUrl: string): Promise<string> {
   try {
@@ -118,6 +118,7 @@ export async function makeCreatureSmile(imageUrl: string, religion: string, gend
       Hindu: 'a background with subtle Hindu artistic elements, or a vibrant and spiritual energy',
       Buddhist: 'a background with subtle Buddhist symbols, or a calm and meditative environment',
       Satanic: 'a background with subtle dark aesthetic elements, or a powerful and mysterious atmosphere',
+      Warplette: 'a crypto bros retardio background, sometimes including text like "clank clank" or "37 only" in a bold style',
     };
 
     const baseInstruction = `Given the image of this ${gender} creature, which looks like ${description}, redraw it. The creature's core appearance and species must remain the same.`;
@@ -136,6 +137,27 @@ export async function makeCreatureSmile(imageUrl: string, religion: string, gend
       outfitInstruction = `Dress it in unique, ${randomStyle} attire.`;
     } else if (religion === 'Jewish') {
       outfitInstruction = `Dress it in unique, modern religious Jewish attire, making it look like it's in its 40s.`;
+    } else if (religion === 'Warplette') {
+      if (gender === 'male') {
+        const warpletteMaleStyles = [
+          'a black cap with "37" boldly written on it',
+          'a black cap with "67" boldly written on it',
+          'a black cap featuring the Farcaster logo (a purple circle with white bars)',
+          'a black cap featuring the Clanker logo (a purple bridge-like shape)',
+          'a white shirt saying "i ❤️ farcaster" in purple color',
+          'a purple shirt saying "i ❤️ farcaster" in white color',
+        ];
+        const randomWarpletteMaleStyle = warpletteMaleStyles[Math.floor(Math.random() * warpletteMaleStyles.length)];
+        outfitInstruction = `Dress it in crypto bros, retardio style dressing attire, including ${randomWarpletteMaleStyle}.`;
+      } else { // Female Warplette
+        const warpletteFemaleStyles = [
+          'a modern tech-inspired outfit with subtle Farcaster purple accents',
+          'a white shirt saying "i ❤️ farcaster" in purple color',
+          'a purple shirt saying "i ❤️ farcaster" in white color',
+        ];
+        const randomWarpletteFemaleStyle = warpletteFemaleStyles[Math.floor(Math.random() * warpletteFemaleStyles.length)];
+        outfitInstruction = `Dress it in crypto bros, retardio style attire, including ${randomWarpletteFemaleStyle}.`;
+      }
     } else {
       outfitInstruction = `Dress it in unique, modern religious ${religion} attire.`;
     }
@@ -146,6 +168,23 @@ export async function makeCreatureSmile(imageUrl: string, religion: string, gend
       itemInstruction = `The creature can be holding ${religiousItems[religion]}.`;
     }
 
+    // Warplette specific instructions
+    let warpletteSpecificInstructions = '';
+    if (religion === 'Warplette') {
+      warpletteSpecificInstructions += `Before applying new attire, remove any existing clothes from the creature.`;
+
+      // Random tattoo logic
+      if (Math.random() < 0.5) { // 50% chance for a tattoo
+        const tattooOptions = [
+          'a tattoo on its cheek saying "37"',
+          'a tattoo on its cheek saying "67"',
+          'a tattoo on its forehead saying "clank clank" very bodly written',
+        ];
+        const randomTattoo = tattooOptions[Math.floor(Math.random() * tattooOptions.length)];
+        warpletteSpecificInstructions += ` It should also have ${randomTattoo}.`;
+      }
+    }
+
     const backgroundInstruction = `The background must be a ${thematicBackgrounds[religion] || 'simple, single solid color that complements the colors of the new outfit.'} and match the outfit's style.`;
 
     const prompt = [
@@ -154,16 +193,19 @@ export async function makeCreatureSmile(imageUrl: string, religion: string, gend
       expressionInstruction,
       poseInstruction,
       itemInstruction,
+      warpletteSpecificInstructions, // Add Warplette specific instructions here
       backgroundInstruction,
       finalInstruction
     ].filter(Boolean).join(' ');
 
     const result = await genAI.models.generateContent({
       model: "gemini-2.5-flash-image-preview",
-      contents: [{ role: "user", parts: [
-        { text: prompt },
-        imagePart
-      ]}],
+      contents: [{
+        role: "user", parts: [
+          { text: prompt },
+          imagePart
+        ]
+      }],
       // @ts-ignore
       safetySettings: [
         {
@@ -175,24 +217,24 @@ export async function makeCreatureSmile(imageUrl: string, religion: string, gend
           threshold: HarmBlockThreshold.BLOCK_NONE,
         },
         {
-            category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-            threshold: HarmBlockThreshold.BLOCK_NONE,
+          category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+          threshold: HarmBlockThreshold.BLOCK_NONE,
         },
         {
-            category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-            threshold: HarmBlockThreshold.BLOCK_NONE,
+          category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+          threshold: HarmBlockThreshold.BLOCK_NONE,
         }
       ],
     });
-    
+
     const part = result.candidates?.[0]?.content?.parts?.[0];
 
     if (part && 'inlineData' in part) {
-        const generatedImage = part.inlineData;
-        //@ts-ignore
-        return `data:${generatedImage.mimeType};base64,${generatedImage.data}`;
+      const generatedImage = part.inlineData;
+      //@ts-ignore
+      return `data:${generatedImage.mimeType};base64,${generatedImage.data}`;
     }
-    
+
     return null;
 
   } catch (error) {
