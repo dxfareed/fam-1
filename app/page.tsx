@@ -2,8 +2,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import styles from "./page.module.css";
-import { useAccount } from 'wagmi';
-import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useAccount, useSendTransaction, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { sdk } from '@farcaster/miniapp-sdk';
 import Loader from "./components/Loader";
@@ -30,8 +29,10 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [errorTimeout, setErrorTimeout] = useState<NodeJS.Timeout | null>(null);
   const [userRejectedError, setUserRejectedError] = useState(false);
-  const [selectedReligion, setSelectedReligion] = useState('Muslim');
+  const [selectedReligion, setSelectedReligion] = useState('Christian');
   const [activeView, setActiveView] = useState<'home' | 'gallery'>('home');
+  const [isSavingToGallery, setIsSavingToGallery] = useState(false);
+  const [finalIpfsUrl, setFinalIpfsUrl] = useState<string | null>(null);
 
   const handleSetError = (errorMessage: string) => {
     if (errorTimeout) {
@@ -44,7 +45,7 @@ export default function Home() {
     setErrorTimeout(timeout);
   };
 
-  const religions = ['Warplette','Christian' ,'Muslim', 'Buddhist', 'Jewish', 'Hindu', 'Satanic'];
+  const religions = [/* 'Warplette', */'Christian' ,'Muslim', 'Buddhist', 'Jewish', 'Hindu', 'Satanic'];
 
   const shortenAddress = (addr: string) => {
     if (!addr) return '';
@@ -144,9 +145,10 @@ export default function Home() {
   useEffect(() => {
     if (isConfirmed && hash && generatedImageUrl) {
       const saveMintToDb = async () => {
+        setIsSavingToGallery(true);
         try {
           const { token } = await sdk.quickAuth.getToken();
-          await fetch('/api/nft/mint', {
+          const response = await fetch('/api/nft/mint', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -157,9 +159,23 @@ export default function Home() {
               txHash: hash 
             }),
           });
+          
+          const data = await response.json();
+
+          // Safe debugging log
+          console.log("Parsed response from /api/nft/mint. Data keys:", Object.keys(data));
+
+          if (response.ok && data.imageUrl) {
+            console.log("Found tokenUri, setting state.", data.imageUrl);
+            setFinalIpfsUrl(data.imageUrl);
+          } else {
+            throw new Error(data.error || "Failed to save mint to DB.");
+          }
         } catch (error) {
           console.error("Failed to save mint to DB:", error);
           handleSetError("Minted, but failed to save to gallery.");
+        } finally {
+          setIsSavingToGallery(false);
         }
       };
       saveMintToDb();
@@ -181,31 +197,24 @@ export default function Home() {
   };
 
   const handleShare = () => {
-    if (!fid || !generatedImageUrl) {
-      console.error("FID or generated image URL is not available for sharing.");
-      handleSetError("Cannot share. Missing user data or image.");
+    const rootUrl = process.env.NEXT_PUBLIC_URL || 'https://your-app-url.com'; // Fallback URL
+    const imageUrlToShare = finalIpfsUrl || generatedImageUrl;
+    
+    if (!imageUrlToShare) {
+      handleSetError("Image URL not available for sharing.");
       return;
     }
 
-    try {
-      const appUrl = process.env.NEXT_PUBLIC_URL || '';
-      const shareUrl = new URL('/share/frame', appUrl);
-      shareUrl.searchParams.set('fid', fid.toString());
-      shareUrl.searchParams.set('imageUrl', generatedImageUrl);
-
-      const castText = "Check out my Warplet Religion";
-
-      sdk.actions.composeCast({
-        text: castText,
-        embeds: [shareUrl.toString()],
-      });
-    } catch (error) {
-      console.error('Failed to compose cast:', error);
-      handleSetError("Could not create share cast.");
-    }
+    const shareUrl = `${rootUrl}/share-frame/generated?imageUrl=${encodeURIComponent(imageUrlToShare)}`;
+    
+    sdk.actions.composeCast({
+      text: "Check out this cool Warplette I generated!",
+      embeds: [shareUrl],
+    });
   };
 
   const handleGenerateNew = () => {
+    sdk.haptics.impactOccurred('medium');
     setGeneratedImageUrl(null);
     reset();
   };
@@ -247,7 +256,7 @@ export default function Home() {
                     alt="Creature"
                     width={256}
                     height={256}
-                    className={styles.imageFadeIn}
+                    className={`${styles.imageFadeIn} ${isGenerating ? styles.heartbeat : ''}`}
                   />
                 </div>
                 <select 
@@ -263,12 +272,18 @@ export default function Home() {
 
                 {isConfirmed ? (
                   <div className={styles.buttonGroup}>
-                    <button className={styles.modernButton} onClick={handleShare}>
-                      Share
+                    <button 
+                      className={`${styles.modernButton} ${styles['share-button-background']}`} 
+                      onClick={handleShare}
+                      disabled={isSavingToGallery}
+                    >
+                      {isSavingToGallery ? 'Saving...' : 'Share'}
                     </button>
-                    <button className={styles.modernButton} onClick={handleGenerateNew}>
-                      Generate New
-                    </button>
+                    {!isSavingToGallery && (
+                      <button className={styles.modernButton} onClick={handleGenerateNew}>
+                        Generate New
+                      </button>
+                    )}
                   </div>
                 ) : (
                   <button
@@ -287,19 +302,20 @@ export default function Home() {
                     ) : isMinting ? (
                       "Minting..."
                     ) : generatedImageUrl ? (
-                      "Mint NFT"
+                      "Mint"
                     ) : (
                       "Generate"
                     )}
                   </button>
                 )}
+                {isGenerating && <p className={styles.waitText}>please wait...</p>}
 
                 {isConfirming && <p>Waiting for confirmation...</p>}
                 {isConfirmed && (
                   <div>
                     <p>Minted Successfully!</p>
                     <a 
-                      href={`https://sepolia.basescan.org/tx/${hash}`} 
+                      href={`https://basescan.org/tx/${hash}`} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className={styles.link}

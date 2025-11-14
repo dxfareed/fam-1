@@ -2,6 +2,9 @@
 import { User } from '@/lib/neynar';
 import prisma from '@/lib/prisma';
 
+
+// mainnet 
+//0x999F46f34292771f77Ed1a5F59ca18eA1Ac29fF7
 const NFT_CONTRACT_ADDRESS = '0x699727f9e01a822efdcf7333073f0461e5914b4e';
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 

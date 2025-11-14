@@ -2,7 +2,7 @@
 import Image from 'next/image';
 import styles from './PhotoViewer.module.css';
 import { ArrowLeft, Share2Icon } from 'lucide-react';
-import { useUser } from '@/app/context/UserContext';
+//import { useUser } from '@/app/context/UserContext';
 import { sdk } from '@farcaster/miniapp-sdk';
 
 interface PhotoViewerProps {
@@ -11,31 +11,16 @@ interface PhotoViewerProps {
 }
 
 const PhotoViewer = ({ imageUrl, onBack }: PhotoViewerProps) => {
-  const { fid } = useUser();
+  //const { fid } = useUser();
 
   const handleShare = () => {
-    if (!fid || !imageUrl) {
-      console.error("FID or image URL is not available for sharing.");
-      // Optionally, show an error to the user.
-      return;
-    }
-
-    try {
-      const appUrl = process.env.NEXT_PUBLIC_URL || '';
-      const shareUrl = new URL('/share/frame', appUrl);
-      console.log('Preparing to share with URL:', shareUrl.toString());
-      shareUrl.searchParams.set('fid', fid.toString());
-      shareUrl.searchParams.set('imageUrl', imageUrl);
-
-      const castText = "Check out this Religious Warplet!";
-      console.log(castText, shareUrl.toString());
-      sdk.actions.composeCast({
-        text: castText,
-        embeds: [shareUrl.toString()],
-      });
-    } catch (error) {
-      console.error('Failed to compose cast:', error);
-    }
+    const rootUrl = process.env.NEXT_PUBLIC_URL || 'https://your-app-url.com'; // Fallback URL
+    const shareUrl = `${rootUrl}/share-frame/generated?imageUrl=${encodeURIComponent(imageUrl)}`;
+    
+    sdk.actions.composeCast({
+      text: "My warplet found faith",
+      embeds: [shareUrl],
+    });
   };
 
   return (

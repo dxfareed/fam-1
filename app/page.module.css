@@ -130,7 +130,32 @@
   animation: fadeIn 1.8s ease-in-out forwards;
 }
 
+.share-button-background {
+  background: rgb(94, 207, 244);
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+.waitText {
+  color: white;
+  margin-top: 1rem;
+}
+
+@keyframes heartbeat {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.heartbeat {
+  animation: heartbeat 1.5s ease-in-out infinite;
 }

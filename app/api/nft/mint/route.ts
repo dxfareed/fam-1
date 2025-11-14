@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    return NextResponse.json({ tokenUri }, { status: 200 });
+    return NextResponse.json({ tokenUri, imageUrl }, { status: 200 });
   } catch (error) {
     console.error("Error during mint process:", error);
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";

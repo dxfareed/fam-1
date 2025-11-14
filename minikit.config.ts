@@ -20,7 +20,7 @@ export const minikitConfig = {
     subtitle: "Choose your warplet faith",
     description: "Warplet for all religions, choose your warplet faith",
     iconUrl: `${ROOT_URL}/icon.png`,
-    splashImageUrl: `${ROOT_URL}/icon22.png`,
+    splashImageUrl: `${ROOT_URL}/icon.png`,
     splashBackgroundColor: "#7A6FAF",
     homeUrl: ROOT_URL,
     imageUrl: `${ROOT_URL}/hero.png`,

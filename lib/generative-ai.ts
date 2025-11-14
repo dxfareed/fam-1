@@ -111,6 +111,9 @@ export async function makeCreatureSmile(imageUrl: string, religion: string, gend
     const expressions = ['a confident expression', 'a gentle smile', 'an energized expression, like it is ready for action'];
     let randomExpression = expressions[Math.floor(Math.random() * expressions.length)];
 
+    let clankerLogoInstruction = 'Clanker logo (A logo with a solid purple circular background. Inside the circle, there are three vertical white bars of increasing height, arranged from left to right, resembling a signal strength indicator or a simplified bar graph.))';
+    let farcasterLogoInstruction = 'Farcaster logo ((A logo consisting of a solid purple square with a white, inverted U-shape (like an archway or a stylized \'A\') cut out from its center, leaving the purple as the dominant shape))';
+
     const thematicBackgrounds: { [key: string]: string } = {
       Muslim: 'a background with rich and varied Islamic architectural patterns, geometric designs, or elements suggesting a vibrant, peaceful oasis or a scholarly setting, with a soft, warm ambiance',
       Christian: 'a background with subtle Christian iconography, or a serene and contemplative atmosphere',
@@ -118,8 +121,14 @@ export async function makeCreatureSmile(imageUrl: string, religion: string, gend
       Hindu: 'a background with subtle Hindu artistic elements, or a vibrant and spiritual energy',
       Buddhist: 'a background with subtle Buddhist symbols, or a calm and meditative environment',
       Satanic: 'a background with subtle dark aesthetic elements, or a powerful and mysterious atmosphere',
-      Warplette: 'a crypto bros retardio background, sometimes including text like "clank clank" or "37 only" in a bold style',
     };
+
+    const warpletteBackgrounds = [
+      'a sleek, dark-themed background with glowing purple geometric patterns, reminiscent of modern crypto wallets. Subtle text like "$DEGEN" or "37" might be integrated into the patterns.',
+      //'a minimalist background with the Farcaster logo (the purple arch) subtly watermarked. The phrase "clank clank" appears in a clean, bold font in a corner.',
+      //'a vibrant, abstract background with purple and magenta gradients, with the number "37" floating as a bold, stylized element.'
+    ];
+    thematicBackgrounds.Warplette = warpletteBackgrounds[Math.floor(Math.random() * warpletteBackgrounds.length)];
 
     const baseInstruction = `Given the image of this ${gender} creature, which looks like ${description}, redraw it. The creature's core appearance and species must remain the same.`;
     const poseInstruction = `It should be in a cool, dynamic, and interesting pose.`;
@@ -129,6 +138,8 @@ export async function makeCreatureSmile(imageUrl: string, religion: string, gend
     if (religion === 'Satanic') {
       expressionInstruction = `It should have a powerful, intense, or mischievous expression on its face, not a smile.`;
     }
+
+
 
     let outfitInstruction = '';
     if (religion === 'Christian') {
@@ -142,10 +153,13 @@ export async function makeCreatureSmile(imageUrl: string, religion: string, gend
         const warpletteMaleStyles = [
           'a black cap with "37" boldly written on it',
           'a black cap with "67" boldly written on it',
+          `a black cap featuring the ${clankerLogoInstruction}`,
+          `a black cap featuring the ${farcasterLogoInstruction}`,
           'a black cap featuring the Farcaster logo (a purple circle with white bars)',
           'a black cap featuring the Clanker logo (a purple bridge-like shape)',
           'a white shirt saying "i ❤️ farcaster" in purple color',
-          'a purple shirt saying "i ❤️ farcaster" in white color',
+          `a white shirt saying "i ${clankerLogoInstruction} farcaster" in purple color`,
+
         ];
         const randomWarpletteMaleStyle = warpletteMaleStyles[Math.floor(Math.random() * warpletteMaleStyles.length)];
         outfitInstruction = `Dress it in crypto bros, retardio style dressing attire, including ${randomWarpletteMaleStyle}.`;
@@ -195,7 +209,7 @@ export async function makeCreatureSmile(imageUrl: string, religion: string, gend
       itemInstruction,
       warpletteSpecificInstructions, // Add Warplette specific instructions here
       backgroundInstruction,
-      finalInstruction
+      finalInstruction,
     ].filter(Boolean).join(' ');
 
     const result = await genAI.models.generateContent({
