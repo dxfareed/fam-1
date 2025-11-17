@@ -14,11 +14,13 @@ import { parseEther } from "viem";
 import { useUser } from "./context/UserContext";
 
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`;
+const PAY_ADDRESS = process.env.NEXT_PUBLIC_BASEBUILDER_ALLOWED_ADDRESS as `0x${string}`;
 
 export default function Home() {
   const { isConnected, address, isConnecting } = useAccount();
   const { openConnectModal } = useConnectModal();
   const { data: hash, writeContract, isPending: isMinting, error: mintError, reset } = useWriteContract();
+  const { data: paymentTxHash, sendTransaction, isPending: isSendingPayment, error: paymentError } = useSendTransaction();
   const { fid } = useUser();
 
   const [nftImageUrl, setNftImageUrl] = useState<string | null>(null);
@@ -33,6 +35,8 @@ export default function Home() {
   const [activeView, setActiveView] = useState<'home' | 'gallery'>('home');
   const [isSavingToGallery, setIsSavingToGallery] = useState(false);
   const [finalIpfsUrl, setFinalIpfsUrl] = useState<string | null>(null);
+  const [showFeeMessage, setShowFeeMessage] = useState(false);
+  const [hasNft, setHasNft] = useState(true);
 
   const handleSetError = (errorMessage: string) => {
     if (errorTimeout) {
@@ -63,9 +67,15 @@ export default function Home() {
       hash,
     })
 
+  const { isLoading: isConfirmingPayment, isSuccess: isPaymentConfirmed } =
+    useWaitForTransactionReceipt({
+      hash: paymentTxHash,
+    });
+
   const checkNftOwnership = async () => {
     setIsCheckingNft(true);
     setError(null);
+    setHasNft(true);
     try {
       const { token } = await sdk.quickAuth.getToken();
       const res = await withRetry(async () => {
@@ -84,18 +94,20 @@ export default function Home() {
       const data = await res.json();
       if (res.ok && data.holdingNft) {
         setNftImageUrl(data.nftImage);
+        setHasNft(true);
       } else {
-        handleSetError("You don't seem to own the required NFT.");
+        setHasNft(false);
       }
     } catch (err) {
       handleSetError("Failed to check NFT ownership.");
       console.error(err);
+      setHasNft(false);
     } finally {
       setIsCheckingNft(false);
     }
   };
 
-  const handleGenerateSmile = async () => {
+  const generateImage = async () => {
     if (!nftImageUrl) return;
     setIsGenerating(true);
     setError(null);
@@ -131,6 +143,41 @@ export default function Home() {
   };
 
   useEffect(() => {
+    if (isPaymentConfirmed) {
+      generateImage();
+    }
+  }, [isPaymentConfirmed]);
+
+  const handleGenerateSmile = async () => {
+    if (!nftImageUrl) return;
+
+    setIsGenerating(true); // Show loader immediately
+
+    try {
+        const { token } = await sdk.quickAuth.getToken();
+        const mintStatusRes = await fetch('/api/user/mint-status', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const { hasMinted } = await mintStatusRes.json();
+
+        if (hasMinted) {
+            setShowFeeMessage(true);
+            setTimeout(() => setShowFeeMessage(false), 3000);
+            sendTransaction({
+                to: PAY_ADDRESS,
+                value: parseEther('0.00005'),
+            });
+        } else {
+            await generateImage();
+        }
+    } catch (err) {
+        handleSetError("Failed to check mint status.");
+        console.error(err);
+        setIsGenerating(false);
+    }
+  };
+
+  useEffect(() => {
     if (mintError) {
       console.error("A minting error occurred:", mintError);
       if (mintError.message.includes('User rejected the request')) {
@@ -141,6 +188,14 @@ export default function Home() {
       }
     }
   }, [mintError]);
+
+  useEffect(() => {
+    if (paymentError) {
+        setIsGenerating(false);
+        handleSetError("Payment failed or was rejected.");
+        console.error("Payment error:", paymentError);
+    }
+  }, [paymentError]);
 
   useEffect(() => {
     if (isConfirmed && hash && generatedImageUrl) {
@@ -208,7 +263,7 @@ export default function Home() {
     const shareUrl = `${rootUrl}/share-frame/generated?imageUrl=${encodeURIComponent(imageUrlToShare)}`;
     
     sdk.actions.composeCast({
-      text: "Check out this cool Warplette I generated!",
+      text: "My warplet found faith",
       embeds: [shareUrl],
     });
   };
@@ -246,9 +301,13 @@ export default function Home() {
           <>
             {isCheckingNft && <Loader />}
             {error && <p className={styles.errorText}>{error}</p>}
+            {!isCheckingNft && !hasNft && (
+              <p className={styles.errorText}>You've to mint a warplet to use this app.</p>
+            )}
             
             {!isCheckingNft && !error && nftImageUrl && (
               <div className={styles.generator}>
+                {showFeeMessage && <p className={styles.feeMessage}>sorry about the fees. it's to pay for the service im hosting on, thank you</p>}
                 <div className={styles.imageContainer}>
                   <Image
                     key={generatedImageUrl || nftImageUrl}
@@ -293,9 +352,13 @@ export default function Home() {
                         ? handleMint
                         : handleGenerateSmile
                     }
-                    disabled={isGenerating || isPreparing || isMinting}
+                    disabled={isGenerating || isPreparing || isMinting || isSendingPayment || isConfirmingPayment}
                   >
-                    {isGenerating ? (
+                    {isSendingPayment ? (
+                      "Sending payment..."
+                    ) : isConfirmingPayment ? (
+                      "Confirming payment..."
+                    ) : isGenerating ? (
                       <Loader />
                     ) : isPreparing ? (
                       "Preparing..."

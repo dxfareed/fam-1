@@ -1,6 +1,7 @@
 // In: app/share-frame/generated/page.tsx
 
 import { minikitConfig } from '@/minikit.config';
+import { redirect } from 'next/navigation';
 import { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic';
@@ -72,6 +73,7 @@ export async function generateMetadata({ searchParams }: any): Promise<Metadata>
 // This page component is not rendered in a browser when a frame is viewed.
 // It's good practice to have a fallback for direct navigation.
 export default function Page() {
+  redirect('/');
   return (
     <div>
       <h1>This is a Farcaster Frame.</h1>

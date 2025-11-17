@@ -1,18 +1,19 @@
 import type { MiniAppNotificationDetails } from "@farcaster/miniapp-sdk";
 import prisma from '@/lib/prisma';
+import { withRetry } from "./retry";
 
 export async function getUserNotificationDetails(
   fid: number
 ): Promise<MiniAppNotificationDetails | null> {
   try {
-    const user = await prisma.user.findUnique({
+    const user = await withRetry(() => prisma.user.findUnique({
       where: {
         fid: BigInt(fid),
       },
       select: {
         notificationToken: true,
       },
-    });
+    }));
 
     if (!user || !user.notificationToken) {
       return null;
@@ -32,14 +33,14 @@ export async function setUserNotificationDetails(
   try {
     const tokenString = JSON.stringify(notificationDetails);
 
-    await prisma.user.update({
+    await withRetry(() => prisma.user.update({
       where: {
         fid: BigInt(fid),
       },
       data: {
         notificationToken: tokenString,
       },
-    });
+    }));
   } catch (error) {
     console.error("Failed to set user notification details:", error);
   }
