@@ -2,8 +2,8 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import styles from "./page.module.css";
+import { useAppKit } from "@reown/appkit/react";
 import { useAccount, useSendTransaction, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { sdk } from '@farcaster/miniapp-sdk';
 import Loader from "./components/Loader";
 import Gallery from "./components/Gallery";
@@ -17,8 +17,8 @@ const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string
 const PAY_ADDRESS = process.env.NEXT_PUBLIC_BASEBUILDER_ALLOWED_ADDRESS as `0x${string}`;
 
 export default function Home() {
+  const { open } = useAppKit();
   const { isConnected, address, isConnecting } = useAccount();
-  const { openConnectModal } = useConnectModal();
   const { data: hash, writeContract, isPending: isMinting, error: mintError, reset } = useWriteContract();
   const { data: paymentTxHash, sendTransaction, isPending: isSendingPayment, error: paymentError } = useSendTransaction();
   const { fid } = useUser();
@@ -288,7 +288,7 @@ export default function Home() {
         ) : (
           <button 
             className={styles.modernButton} 
-            onClick={openConnectModal} 
+            onClick={open} 
             disabled={isConnecting}
           >
             {isConnecting ? 'Connecting...' : 'Connect'}

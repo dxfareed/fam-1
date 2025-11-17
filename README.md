@@ -1,21 +1,33 @@
-# Warplet Family Tree
+# Religious Warplet
 
-A web application that visualizes your Farcaster social graph in a unique and engaging family tree format. This application identifies the top members of your Farcaster family who hold a specific "Warplet" NFT and displays them in a hierarchical layout, ranked by their affinity score.
+A generative AI application for the Warplet NFT community. This tool allows users who have minted a Warplet NFT to generate a new, unique version of their NFT image, featuring attire based on various religions, and then mint it as a new NFT on the Base network.
+
+## How It Works
+
+The application uses a multi-step generative AI process to create unique artwork:
+
+1.  **NFT Ownership Verification:** The app first checks the user's verified Farcaster wallets to confirm they have minted an original Warplet NFT.
+2.  **Image Analysis:** It analyzes the user's Warplet NFT image to determine the creature's apparent gender and other visual features.
+3.  **AI-Powered Generation:** Based on the user's selection from a list of religions (e.g., Christian, Muslim, Jewish, Hindu, etc.), the application uses the image analysis data to generate a highly specific prompt for the AI.
+4.  **Unique Artwork Creation:** The AI model creates a new image of the Warplet, complete with unique, fitting attire that corresponds to the chosen religion.
+5.  **Minting:** The user can then mint their newly generated religious Warplet as a new ERC-721 NFT on the Base blockchain.
 
 ## Features
 
 *   **Farcaster Authentication:** Securely log in with your Farcaster account.
-*   **Family Tree Visualization:** View your Farcaster family in a 1-2-3 hierarchical layout.
-*   **NFT Holder Identification:** Automatically identifies which members of your family hold a specific NFT.
-*   **Affinity-Based Ranking:** Ranks NFT holders based on their mutual affinity score to determine their position in the family tree.
-*   **Modern UI/UX:** A clean and modern interface with a dark theme and engaging animations.
+*   **NFT Ownership Check:** Verifies that the user has minted the required NFT.
+*   **Context-Aware AI Generation:** Creates unique, high-quality images based on the original NFT's features and a selected religion.
+*   **NFT Minting:** Allows users to mint their generated artwork as a new NFT on the Base network.
+*   **Gallery:** View all the Religious Warplets that have been created and minted by the community.
 
 ## Tech Stack
 
 *   **Framework:** [Next.js](https://nextjs.org/)
 *   **Authentication:** [Farcaster Quick Auth SDK](https://github.com/farcasterxyz/quick-auth-sdk)
+*   **Generative AI:** [Google Gemini API](https://ai.google.dev/)
 *   **Farcaster Data:** [Neynar API](https://neynar.com/)
-*   **NFT Data:** [Alchemy API](https://www.alchemy.com/) & [Ethers.js](https://ethers.io/)
+*   **Blockchain Interaction:** [Wagmi](https://wagmi.sh/) & [Reown AppKit](https://docs.reown.com/appkit/overview)
+*   **IPFS Pinning:** [Pinata](https://www.pinata.cloud/)
 *   **Styling:** [CSS Modules](https://github.com/css-modules/css-modules)
 *   **Database:** [Prisma](https://www.prisma.io/) with [PostgreSQL](https://www.postgresql.org/)
 

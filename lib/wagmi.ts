@@ -1,22 +1,25 @@
-import { http, createConfig, webSocket, fallback } from 'wagmi';
-import { base } from 'wagmi/chains';
-import {farcasterMiniApp} from '@farcaster/miniapp-wagmi-connector'
-import { walletConnect } from 'wagmi/connectors';
+import { createAppKit } from '@reown/appkit/react'
+import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
+import { base } from '@reown/appkit/networks'
+import { http, fallback } from 'wagmi'
 
 const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!;
+const in_rpc_url = process.env.NEXT_PUBLIC_HTTPS_IN_URL;
 
-const in_rpc_url = process.env.NEXT_PUBLIC_HTTPS_IN_URL
-
-export const config = createConfig({
-  chains: [base],
+const wagmiAdapter = new WagmiAdapter({
+  projectId,
+  networks: [base],
   transports: {
-    [base.id]:fallback([
+    [base.id]: fallback([
       http(in_rpc_url),
     ]),
   },
-  ssr:true,
-  connectors: [
-    farcasterMiniApp(),
-    walletConnect({ projectId, showQrModal: true }),
-  ]
 })
+
+createAppKit({
+  adapters: [wagmiAdapter],
+  projectId,
+  networks: [base],
+})
+
+export const config = wagmiAdapter.wagmiConfig;
